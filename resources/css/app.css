@@ -1,0 +1,20 @@
+/* @tailwind base;
+@tailwind components;
+@tailwind utilities; */
+
+@import "tailwindcss/base";
+@import "tailwindcss/components";
+@import "tailwindcss/utilities";
+
+@import './form.css';
+
+:root {
+
+}
+body {
+    font-size: 14px;
+}
+
+a {
+    @apply text-blue-500
+}

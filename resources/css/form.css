@@ -1,0 +1,29 @@
+.my-form {
+    .form-label {
+        @apply block mb-2 text-sm font-medium text-gray-900 dark:text-white;
+    }
+
+    .form-control {
+        @apply bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white focus:ring-0;
+    }
+}
+
+
+.form-select {
+    @apply border-gray-300 focus:border-indigo-200 focus:ring-indigo-200 rounded-md shadow-sm;
+}
+.form-select:disabled {
+    @apply bg-gray-50;
+}
+
+.button-primary {
+    @apply inline-flex items-center px-4 py-2 bg-gray-800 border border-transparent rounded-md font-semibold text-xs text-white uppercase tracking-widest hover:bg-gray-700 focus:bg-gray-700 active:bg-gray-900 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 transition ease-in-out duration-150;
+}
+
+.button-danger {
+    @apply inline-flex items-center px-4 py-2 bg-red-600 border border-transparent rounded-md font-semibold text-xs text-white uppercase tracking-widest hover:bg-red-500 active:bg-red-700 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-2 transition ease-in-out duration-150;
+}
+
+.button-sm {
+    @apply px-4 py-1;
+}
