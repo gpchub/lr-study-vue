@@ -24,7 +24,8 @@ class HocPhi extends Model
     ];
 
     protected $casts = [
-        'ngay_dong' => 'date'
+        'ngay_dong' => 'date',
+        'so_tien' => 'integer',
     ];
 
     public function lop_hoc() : BelongsTo

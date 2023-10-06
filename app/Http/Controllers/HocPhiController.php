@@ -96,8 +96,6 @@ class HocPhiController extends Controller
     {
         $validated = $request->validate([
             'so_tien' => 'required|numeric',
-            'thang' => 'required|numeric',
-            'nam' => 'required|numeric',
             'hoc_vien_id' => 'required|numeric',
             'lop_hoc_id' => 'required|numeric',
         ]);

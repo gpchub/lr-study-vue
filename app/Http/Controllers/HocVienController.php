@@ -267,7 +267,7 @@ class HocVienController extends Controller
                     ->where('lop_hoc_id', $lop_hoc_id)
                     ->where('thang', $thang)
                     ->where('nam', $nam)
-                    ->count();
+                    ->exists();
 
         if ($checkHocPhiExists) {
             return back()->withInput()

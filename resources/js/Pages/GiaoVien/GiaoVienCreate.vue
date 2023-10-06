@@ -48,7 +48,7 @@ function submitForm() {
                 <form @submit.prevent="submitForm" class="space-y-6">
                     <div>
                         <InputLabel for="ho" value="Họ và chữ lót" />
-                        <TextInput id="ho" type="text" class="mt-1 block w-full" v-model="form.ho" required autofocus />
+                        <TextInput id="ho" type="text" class="mt-1 block w-full" v-model="form.ho"  autofocus />
                         <InputError class="mt-2" :message="form.errors.ho" />
                     </div>
 

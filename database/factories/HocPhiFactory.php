@@ -2,6 +2,8 @@
 
 namespace Database\Factories;
 
+use App\Models\HocVien;
+use App\Models\LopHoc;
 use App\Models\LopHocVien;
 use Illuminate\Database\Eloquent\Factories\Factory;
 use Illuminate\Support\Carbon;
@@ -18,14 +20,16 @@ class HocPhiFactory extends Factory
      */
     public function definition(): array
     {
-        $lop_hoc_vien = LopHocVien::inRandomOrder()->first();
+        $hoc_vien = HocVien::inRandomOrder()->first();
+        $lop_hoc = LopHoc::inRandomOrder()->first();
         $so_tien = 1200000;
         $thang = fake()->numberBetween(1, 12);
         $nam = fake()->numberBetween(2022, 2023);
         $ngay_dong = Carbon::createFromDate($nam, $thang, fake()->numberBetween(1, 28));
 
         return [
-            'lop_hoc_vien_id' => $lop_hoc_vien->id,
+            'hoc_vien_id' => $hoc_vien->id,
+            'lop_hoc_id' => $lop_hoc->id,
             'so_tien' => $so_tien,
             'thang' => $thang,
             'nam' => $nam,
