@@ -4,7 +4,6 @@ namespace App\Http\Controllers;
 
 use App\Models\Enums\GioiTinh;
 use App\Models\GiaoVien;
-use App\Services\GiaoVienService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Redirect;
 use Inertia\Inertia;
@@ -12,9 +11,7 @@ use Inertia\Response;
 
 class GiaoVienController extends Controller
 {
-    public function __construct(
-        protected GiaoVienService $giaoVienService
-    ) { }
+
     public function index(Request $request)
     {
         $filter = $request->input('filter');

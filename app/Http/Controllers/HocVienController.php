@@ -2,10 +2,8 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\ChungChi;
 use App\Models\Enums\GioiTinh;
 use App\Models\Enums\KetQuaThiChungChi;
-use App\Models\Enums\TinhTrangHocVien;
 use App\Models\Enums\TinhTrangThiChungChi;
 use App\Models\HocPhi;
 use App\Models\HocVien;
@@ -13,16 +11,12 @@ use App\Models\LichThi;
 use App\Models\LichThiHocVien;
 use App\Models\LopHoc;
 use App\Models\LopHocVien;
-use App\Services\HocVienService;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\DB;
 use Inertia\Inertia;
 
 class HocVienController extends Controller
 {
-    public function __construct(
-        protected HocVienService $hocVienService
-    )
+    public function __construct()
     {
 
     }
@@ -220,7 +214,11 @@ class HocVienController extends Controller
             'lop_hoc_id' => 'required|numeric',
         ]);
 
-        $this->hocVienService->dangKyLop($request->all());
+        $item = new LopHocVien();
+        $item->hoc_vien_id = $request->input('hoc_vien_id');
+        $item->lop_hoc_id = $request->input('lop_hoc_id');
+        $item->ngay_bat_dau = $request->input('ngay_bat_dau') ?? now();
+        $item->save();
 
         return back()->withInput()
                 ->with('message', 'Đăng ký lớp thành công')
