@@ -77,7 +77,6 @@ class HocVienService
         $dien_thoai = $data['dien_thoai'] ?? '';
         $gioi_tinh = $data['gioi_tinh'] ?? 0;
         $ngay_sinh = $data['ngay_sinh'] ?? '';
-        $tinh_trang = $data['tinh_trang'] ?? 1;
 
         $item = new HocVien();
         $item->ho = $ho;
@@ -86,7 +85,6 @@ class HocVienService
         $item->dien_thoai = $dien_thoai;
         $item->gioi_tinh = $gioi_tinh;
         $item->ngay_sinh = $ngay_sinh;
-        $item->tinh_trang = $tinh_trang;
         $item->save();
 
         return $item;
@@ -101,7 +99,6 @@ class HocVienService
         $dien_thoai = $data['dien_thoai'] ?? '';
         $gioi_tinh = $data['gioi_tinh'] ?? 0;
         $ngay_sinh = $data['ngay_sinh'] ?? '';
-        $tinh_trang = $data['tinh_trang'] ?? null;
 
         $item = $this->getById($id);
         $item->ho = $ho;
@@ -110,12 +107,6 @@ class HocVienService
         $item->dien_thoai = $dien_thoai;
         $item->gioi_tinh = $gioi_tinh;
         $item->ngay_sinh = $ngay_sinh;
-
-        if ($tinh_trang)
-        {
-            $item->tinh_trang = $tinh_trang;
-        }
-
         $item->save();
 
         return $item;
@@ -126,12 +117,10 @@ class HocVienService
         $hoc_vien_id = $data['hoc_vien_id'];
         $lop_hoc_id = $data['lop_hoc_id'];
         $ngay_bat_dau = $data['ngay_bat_dau'] ?? now();
-        $tinh_trang = 1;
 
         $item = new LopHocVien();
         $item->hoc_vien_id = $hoc_vien_id;
         $item->lop_hoc_id = $lop_hoc_id;
-        $item->tinh_trang = $tinh_trang;
         $item->ngay_bat_dau = $ngay_bat_dau;
         $item->save();
         return $item;

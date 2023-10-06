@@ -48,6 +48,12 @@ const showingNavigationDropdown = ref(false);
                                 <NavLink :href="route('hoc-phi.index')" :active="route().current('hoc-phi.index')">
                                     Học phí
                                 </NavLink>
+                                <NavLink :href="route('chung-chi.index')" :active="route().current('chung-chi.index')">
+                                    Chứng chỉ
+                                </NavLink>
+                                <NavLink :href="route('lich-thi.index')" :active="route().current('lich-thi.index')">
+                                    Lịch thi
+                                </NavLink>
                             </div>
                         </div>
 

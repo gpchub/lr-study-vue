@@ -2,21 +2,41 @@
 import { ref, onMounted } from 'vue';
 import flatpickr from 'flatpickr';
 
-defineProps(['modelValue'])
+const props = defineProps({
+    modelValue: String,
+    hasTimePicker: {
+        type: Boolean,
+        default: false,
+    },
+    minDate: {
+        type: [String, Date],
+        default: null,
+    }
+})
 defineEmits(['update:modelValue'])
 
 const inputElement = ref(null);
 
 onMounted(() => {
-    flatpickr(inputElement.value, {
+    let options = {
         altInput: true,
         altFormat: "d/m/Y",
         dateFormat: "Y-m-d",
-    });
+        minDate: props.minDate,
+    };
+
+    if (props.hasTimePicker) {
+        options.enableTime = true;
+        options.altFormat = 'd/m/Y H:i';
+        options.dateFormat = 'Y-m-d H:i';
+    }
+
+    flatpickr(inputElement.value, options);
 });
 
 </script>
 <template>
+
     <input
         :value="modelValue"
         @input="$emit('update:modelValue', $event.target.value)"

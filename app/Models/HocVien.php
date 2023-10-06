@@ -42,11 +42,21 @@ class HocVien extends Model
     {
         return $this->belongsToMany(LopHoc::class, 'lop_hoc_vien', 'hoc_vien_id', 'lop_hoc_id')
                     ->using(LopHocVien::class)
-                    ->withPivot(['id', 'ngay_bat_dau', 'tinh_trang']);
+                    ->withPivot(['id', 'ngay_bat_dau',]);
     }
 
     public function hoc_phi() : HasMany
     {
         return $this->hasMany(HocPhi::class);
+    }
+
+    public function lich_thi() : BelongsToMany
+    {
+        return $this->belongsToMany(
+                        LichThi::class,
+                        'lich_thi_hoc_vien',
+                        'hoc_vien_id',
+                        'lich_thi_id'
+                    )->withPivot(['id', 'tinh_trang', 'ket_qua']);
     }
 }

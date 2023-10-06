@@ -84,7 +84,7 @@ defineExpose({
                         <td v-if="hasCheckboxes" class="px-4 py-3 whitespace-nowrap">
                             <input type="checkbox" :value="item.id" v-model="checkedIds"/>
                         </td>
-                        <td v-for="col in columns" class="px-4 py-3 whitespace-nowrap">
+                        <td v-for="col in columns" class="px-4 py-3 ">
                             <slot :name="'cot_' + col.field" :item="item">
                                 {{ item[col.field] }}
                             </slot>

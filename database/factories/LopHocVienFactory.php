@@ -25,7 +25,6 @@ class LopHocVienFactory extends Factory
         return [
             'hoc_vien_id' => $hoc_vien->id,
             'lop_hoc_id' => $lop->id,
-            'tinh_trang' => 1,
             'ngay_bat_dau' => $ngay_bat_dau
         ];
     }

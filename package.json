@@ -19,6 +19,16 @@
         "vue": "^3.2.41"
     },
     "dependencies": {
+        "@ckeditor/ckeditor5-basic-styles": "^40.0.0",
+        "@ckeditor/ckeditor5-editor-classic": "^40.0.0",
+        "@ckeditor/ckeditor5-essentials": "^40.0.0",
+        "@ckeditor/ckeditor5-font": "^40.0.0",
+        "@ckeditor/ckeditor5-link": "^40.0.0",
+        "@ckeditor/ckeditor5-paragraph": "^40.0.0",
+        "@ckeditor/ckeditor5-theme-lark": "^40.0.0",
+        "@ckeditor/ckeditor5-vue": "^5.1.0",
+        "@tinymce/tinymce-vue": "^5.1.1",
+        "@vueup/vue-quill": "^1.2.0",
         "chart.js": "^4.4.0",
         "chartjs-plugin-datalabels": "^2.2.0",
         "flatpickr": "^4.6.13",

@@ -17,5 +17,8 @@
     </head>
     <body class="font-sans antialiased">
         @inertia
+
+        <script src="{{ asset('assets/vendors/tinymce/tinymce.min.js') }}"></script>
+        <script src="{{ asset('assets/vendors/ckeditor/ckeditor.js') }}"></script>
     </body>
 </html>

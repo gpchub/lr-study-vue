@@ -1,10 +1,12 @@
 <?php
 
 use App\Http\Controllers\ChiNhanhController;
+use App\Http\Controllers\ChungChiController;
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\GiaoVienController;
 use App\Http\Controllers\HocPhiController;
 use App\Http\Controllers\HocVienController;
+use App\Http\Controllers\LichThiController;
 use App\Http\Controllers\LopHocController;
 use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\ThongKeController;
@@ -64,6 +66,11 @@ Route::prefix('hoc-vien')->name('hoc-vien.')->group(function() {
     Route::post('/xoa-lop', [HocVienController::class, 'xoaLop'])->name('xoa-lop');
     Route::post('/dong-hoc-phi', [HocVienController::class, 'dongHocPhi'])->name('dong-hoc-phi');
     Route::get('/xem-hoc-phi', [HocVienController::class, 'xemHocPhi'])->name('xem-hoc-phi');
+    Route::get('/in-danh-sach', [HocVienController::class, 'inDanhSach'])->name('in-danh-sach');
+
+    Route::post('/dang-ky-thi', [HocVienController::class, 'dangKyThi'])->name('dang-ky-thi');
+    Route::post('/update-lich-thi', [HocVienController::class, 'updateLichThi'])->name('update-lich-thi');
+    Route::post('/xoa-lich-thi', [HocVienController::class, 'xoaLichThi'])->name('xoa-lich-thi');
 });
 
 Route::prefix('giao-vien')->name('giao-vien.')->group(function() {
@@ -99,4 +106,22 @@ Route::prefix('thong-ke')->name('thong-ke.')->group(function() {
     Route::get('/get-so-hoc-vien-theo-lop', [ThongKeController::class, 'getSoHocVienTheoLop'])->name('get-so-hoc-vien-theo-lop');
     Route::get('/get-tong-hoc-phi-theo-lop', [ThongKeController::class, 'getTongHocPhiTheoLop'])->name('get-tong-hoc-phi-theo-lop');
     Route::get('/get-top-hoc-vien-theo-hoc-phi', [ThongKeController::class, 'getTopHocVienTheoHocPhi'])->name('get-top-hoc-vien-theo-hoc-phi');
+});
+
+Route::prefix('chung-chi')->name('chung-chi.')->group(function() {
+    Route::get('/', [ChungChiController::class, 'index'])->name('index');
+    Route::get('/create', [ChungChiController::class, 'create'])->name('create');
+    Route::get('/edit/{item}', [ChungChiController::class, 'edit'])->name('edit');
+    Route::post('/store', [ChungChiController::class, 'store'])->name('store');
+    Route::patch('/update', [ChungChiController::class, 'update'])->name('update');
+    Route::post('/delete', [ChungChiController::class, 'delete'])->name('delete');
+});
+
+Route::prefix('lich-thi')->name('lich-thi.')->group(function() {
+    Route::get('/', [LichThiController::class, 'index'])->name('index');
+    Route::get('/create', [LichThiController::class, 'create'])->name('create');
+    Route::get('/edit/{item}', [LichThiController::class, 'edit'])->name('edit');
+    Route::post('/store', [LichThiController::class, 'store'])->name('store');
+    Route::patch('/update', [LichThiController::class, 'update'])->name('update');
+    Route::post('/delete', [LichThiController::class, 'delete'])->name('delete');
 });

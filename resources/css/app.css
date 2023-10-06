@@ -8,6 +8,18 @@
 
 @import './form.css';
 
+@layer base {
+    h1 {
+      @apply text-2xl;
+    }
+    h2 {
+      @apply text-xl;
+    }
+    h3 {
+      @apply text-lg;
+    }
+  }
+
 :root {
 
 }
@@ -17,4 +29,16 @@ body {
 
 a {
     @apply text-blue-500
+}
+
+dl,
+menu,
+ol,
+ul {
+    margin: 1em 0;
+    padding-left: 40px;
+}
+
+dd {
+    margin: 0 0 0 40px;
 }

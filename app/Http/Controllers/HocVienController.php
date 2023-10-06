@@ -2,14 +2,20 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\ChungChi;
 use App\Models\Enums\GioiTinh;
+use App\Models\Enums\KetQuaThiChungChi;
 use App\Models\Enums\TinhTrangHocVien;
+use App\Models\Enums\TinhTrangThiChungChi;
 use App\Models\HocPhi;
 use App\Models\HocVien;
+use App\Models\LichThi;
+use App\Models\LichThiHocVien;
 use App\Models\LopHoc;
 use App\Models\LopHocVien;
 use App\Services\HocVienService;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 use Inertia\Inertia;
 
 class HocVienController extends Controller
@@ -75,7 +81,6 @@ class HocVienController extends Controller
             'dien_thoai' => $item->dien_thoai,
             'ngay_sinh' => $item->ngay_sinh->format('d/m/Y'),
             'gioi_tinh' => GioiTinh::from($item->gioi_tinh)->title(),
-            'tinh_trang' => TinhTrangHocVien::from($item->tinh_trang)->title(),
         ]);
 
         return Inertia::render('HocVien/HocVienIndex', [
@@ -127,15 +132,43 @@ class HocVienController extends Controller
             'lop_hoc_vien_id' => $item->pivot->id,
             'hoc_vien_id' => $item->pivot->hoc_vien_id,
             'lop_hoc_id' => $item->pivot->lop_hoc_id,
-            'tinh_trang' => $item->pivot->tinh_trang,
             'ngay_bat_dau' => $item->pivot->ngay_bat_dau->format('d/m/Y'),
         ])->all();
+
+        $listLichThiHocVienIds = $item->lich_thi->pluck('id');
+        $listLichThiHocVien = $item->lich_thi()->with('chung_chi')->orderBy('ngay_thi')->get()->transform(fn ($item) => [
+            'id' => $item->id,
+            'ngay_thi' => $item->ngay_thi->format('d/m/Y - H:i'),
+            'dia_diem' => $item->dia_diem,
+            'ten_chung_chi' => $item->chung_chi->ten,
+            'chung_chi_id' => $item->chung_chi_id,
+            //pivot
+            'lich_thi_hoc_vien_id' => $item->pivot->id,
+            'hoc_vien_id' => $item->pivot->hoc_vien_id,
+            'lich_thi_id' => $item->pivot->lich_thi_id,
+            'tinh_trang' => $item->pivot->tinh_trang,
+            'ket_qua' => $item->pivot->ket_qua,
+            'tinh_trang_text' => TinhTrangThiChungChi::from($item->pivot->tinh_trang)->title(),
+            'ket_qua_text' => KetQuaThiChungChi::from($item->pivot->ket_qua)->title(),
+        ]);
+
+        $listLichThi = LichThi::with('chung_chi')->orderBy('ngay_thi')->get();
+        $listLichThi->transform(fn ($item) => [
+            'id' => $item->id,
+            'chung_chi_id' => $item->chung_chi_id,
+            'ngay_thi' => $item->ngay_thi->format('d/m/Y - H:i'),
+            'dia_diem' => $item->dia_diem,
+            'chung_chi' => $item->chung_chi
+        ]);
 
         return Inertia::render('HocVien/HocVienEdit', [
             'hocVien' => $item,
             'listLopHocVien' => $listLopHocVien,
             'listLopHocVienIds' => $listLopHocVienIds,
             'listLopHoc' => $listLopHoc,
+            'listLichThiHocVien' => $listLichThiHocVien,
+            'listLichThiHocVienIds' => $listLichThiHocVienIds,
+            'listLichThi' => $listLichThi,
         ]);
     }
 
@@ -282,5 +315,69 @@ class HocVienController extends Controller
         return response()->json($ds);
     }
 
+    public function inDanhSach()
+    {
+        $list = HocVien::orderBy('ten')->get();
+        return Inertia::render('HocVien/InDanhSach', [
+            'list' => $list
+        ]);
+    }
+
+    public function dangKyThi(Request $request)
+    {
+        $validated = $request->validate([
+            'hoc_vien_id' => 'required|numeric',
+            'lich_thi_id' => 'required|numeric',
+        ]);
+
+        $hoc_vien_id = $request->input('hoc_vien_id');
+        $lich_thi_id = $request->input('lich_thi_id');
+
+        if ( LichThiHocVien::where('hoc_vien_id', $hoc_vien_id)
+                ->where('lich_thi_id', $lich_thi_id)
+                ->exists()
+        ) {
+            return back()->withInput()
+                ->with('message', "Học viên đã đăng ký đợt thi này")
+                ->with('status', 'error');
+        }
+
+        LichThiHocVien::create([
+            'hoc_vien_id' => $hoc_vien_id,
+            'lich_thi_id' => $lich_thi_id,
+        ]);
+
+        return back()->withInput()
+                ->with('message', 'Đăng ký khi thành công')
+                ->with('status', 'success');
+    }
+
+    public function updateLichThi(Request $request)
+    {
+        $validated = $request->validate([
+            'lich_thi_hoc_vien_id' => 'required'
+        ]);
+
+        $id = $request->input('lich_thi_hoc_vien_id');
+
+        $item = LichThiHocVien::find($id);
+        $item->tinh_trang = $request->input('tinh_trang');
+        $item->ket_qua = $request->input('ket_qua');
+        $item->save();
+
+        return back()->withInput()
+                ->with('message', 'Cập nhật chứng chỉ học viên thành công')
+                ->with('status', 'success');
+    }
+
+    public function xoaLichThi(Request $request)
+    {
+        $id = $request->input('id');
+        $item = LichThiHocVien::find($id);
+        $item->delete();
+        return back()->withInput()
+                ->with('message', 'Xoá chứng chỉ học viên thành công')
+                ->with('status', 'success');
+    }
 
 }

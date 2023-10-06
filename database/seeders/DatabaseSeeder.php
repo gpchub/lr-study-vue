@@ -5,13 +5,17 @@ namespace Database\Seeders;
 // use Illuminate\Database\Console\Seeds\WithoutModelEvents;
 
 use App\Models\ChiNhanh;
+use App\Models\ChungChi;
 use App\Models\GiaoVien;
 use App\Models\HocPhi;
 use App\Models\HocVien;
+use App\Models\LichThi;
 use App\Models\LopHoc;
 use App\Models\LopHocVien;
 use Carbon\Carbon;
 use Illuminate\Database\Seeder;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Schema;
 
 class DatabaseSeeder extends Seeder
 {
@@ -57,7 +61,6 @@ class DatabaseSeeder extends Seeder
                 $randomLopIds = fake()->randomElements($hocVienIds, fake()->numberBetween(10, 15));
                 $randomLop = array_reduce($randomLopIds, function ($acc, $element) {
                     $acc[$element] = [
-                        'tinh_trang' => 1,
                         'ngay_bat_dau' => fake()->dateTimeBetween('-1 years')
                     ];
                     return $acc;
@@ -111,6 +114,23 @@ class DatabaseSeeder extends Seeder
                     }
                 }
             }
+        });
+
+        // Schema::disableForeignKeyConstraints();
+        // DB::table('lich_thi_hoc_vien')->truncate();
+        // DB::table('lich_thi')->truncate();
+        // DB::table('chung_chi')->truncate();
+        // Schema::enableForeignKeyConstraints();
+
+        ChungChi::factory(5)->create();
+        $listHocVienIds = HocVien::pluck('id');
+        LichThi::factory(50)->create()->each(function ($lich) use ($listHocVienIds) {
+            $randomHocVien = fake()->randomElements(
+                                    $listHocVienIds,
+                                    fake()->numberBetween(5,10)
+                                );
+            $lich->hoc_vien()->attach($randomHocVien);
+
         });
     }
 }
