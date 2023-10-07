@@ -15,17 +15,108 @@ use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Foundation\Testing\WithFaker;
 use Tests\TestCase;
+use Inertia\Testing\AssertableInertia as Assert;
 
 class HocVienTest extends TestCase
 {
     use RefreshDatabase;
+
+    protected $user;
+
+    protected function setUp(): void
+    {
+        parent::setUp();
+        $this->user = User::factory()->create();
+
+        GiaoVien::factory(3)->create();
+        ChiNhanh::factory(3)->create();
+        $lop1 = LopHoc::factory()->create(['id' => 1]);
+        $lop2 = LopHoc::factory()->create(['id' => 2]);
+        $lop3 = LopHoc::factory()->create(['id' => 3]);
+
+        HocVien::factory()->create([
+            'id' => 1,
+            'ho' => 'Nguyen',
+            'ten' => 'XYZ',
+            'email' => 'hv1@example.test',
+            'dien_thoai' => '123',
+        ])->lop_hoc()->attach($lop1->id, ['ngay_bat_dau' => '2023-10-10']);
+
+        HocVien::factory()->create([
+            'id' => 2,
+            'ho' => 'Tran',
+            'ten' => 'ABC',
+            'email' => 'hv2@example.test',
+            'dien_thoai' => '456',
+        ])->lop_hoc()->attach($lop2->id, ['ngay_bat_dau' => '2023-10-10']);
+
+        HocVien::factory()->create([
+            'id' => 3,
+            'ho' => 'Le',
+            'ten' => 'ABD',
+            'email' => 'hv3@example.test',
+            'dien_thoai' => '789',
+        ])->lop_hoc()->attach($lop3->id, ['ngay_bat_dau' => '2023-10-10']);
+    }
 
     public function test_hoc_vien_index_is_displayed(): void
     {
         $response = $this->get( route('hoc-vien.index') );
 
         $response->assertStatus(200);
+
+        $response->assertInertia(
+            fn (Assert $page) => $page
+                ->has('list')
+                ->has('list.data', 3)
+                ->has( 'list.data.0', fn (Assert $assert) => $assert ->where('ho_va_ten', 'Le ABD') ->etc() )
+                ->has( 'list.data.1', fn (Assert $assert) => $assert ->where('ho_va_ten', 'Tran ABC') ->etc() )
+                ->has( 'list.data.2', fn (Assert $assert) => $assert ->where('ho_va_ten', 'Nguyen XYZ') ->etc() )
+                ->has( 'listLopHoc', 3 )
+        );
     }
+
+    /**
+     * @dataProvider searchData
+     */
+    public function test_hoc_vien_can_be_filter($field, $value, $count, $first): void
+    {
+        $response = $this->get(route('hoc-vien.index', [
+            'filter' => [
+                $field => $value
+            ],
+        ]));
+
+        $response->assertStatus(200);
+
+        $response->assertInertia(fn (Assert $page) =>
+            $page
+                ->has('list')
+                ->has('list.data', $count)
+                ->where('filter.' . $field, $value)
+                ->has( 'list.data.0', fn (Assert $assert) => $assert ->where('ho_va_ten', $first)->etc() )
+        );
+    }
+
+    /**
+     * @dataProvider sortData
+     */
+    public function test_giao_vien_can_be_sort($sort, $first): void
+    {
+        $response = $this->get(route('hoc-vien.index', [
+           'sort' => $sort
+        ]));
+
+        $response->assertStatus(200);
+
+        $response->assertInertia(fn (Assert $page) => $page
+                ->has('list')
+                ->has('list.data', 3)
+                ->where('sort', $sort)
+                ->has( 'list.data.0', fn (Assert $assert) => $assert ->where('ho_va_ten', $first)->etc() )
+        );
+    }
+
 
     public function test_hoc_vien_create_is_displayed(): void
     {
@@ -34,86 +125,88 @@ class HocVienTest extends TestCase
         $response->assertStatus(200);
     }
 
-    public function test_hoc_vien_can_be_validated_on_creating(): void
+    /**
+     * @dataProvider invalidPostData
+     */
+    public function test_hoc_vien_can_be_validated_on_creating($data, $invalidFields, $validFields): void
     {
-        $user = User::factory()->create();
-
         $response = $this
-            ->actingAs($user)
+            ->actingAs($this->user)
             ->from(route('hoc-vien.create'))
-            ->post(route('hoc-vien.store'), []);
+            ->post(route('hoc-vien.store'), $data);
 
         $response
-            ->assertSessionHasErrors([
-                'ho',
-                'ten',
-                'email',
-                'dien_thoai',
-                'ngay_sinh',
-            ])
+            ->assertValid($validFields)
+            ->assertInvalid($invalidFields)
             ->assertRedirect( route('hoc-vien.create') );
     }
 
     public function test_hoc_vien_can_be_created(): void
     {
-        $user = User::factory()->create();
         $postData = $this->postData();
 
         $response = $this
-            ->actingAs($user)
+            ->actingAs($this->user)
             ->post(route('hoc-vien.store'), $postData);
 
         $response
             ->assertSessionHasNoErrors()
             ->assertRedirect(route('hoc-vien.index'));
 
-        $item = HocVien::latest()->first();
+        $item = HocVien::latest('id')->first();
 
         $this->assertSame($postData['ho'], $item->ho);
         $this->assertSame($postData['ten'], $item->ten);
         $this->assertSame($postData['email'], $item->email);
         $this->assertSame($postData['dien_thoai'], $item->dien_thoai);
         $this->assertSame($postData['gioi_tinh'], $item->gioi_tinh);
-        $this->assertSame($postData['ngay_sinh'], $item->ngay_sinh->format('Y/m/d'));
+        $this->assertSame($postData['ngay_sinh'], $item->ngay_sinh->format('Y-m-d'));
     }
 
     public function test_hoc_vien_edit_is_displayed(): void
     {
-        $item = HocVien::factory()->create();
-        $response = $this->get( route('hoc-vien.edit', $item->id) ) ;
+        $item = HocVien::first();
+        $this->createLichThiForHocVien($item, 3);
+        $response = $this
+            ->get( route('hoc-vien.edit', $item->id) )
+            ->assertStatus(200);
 
-        $response->assertStatus(200);
+        $response->assertInertia(fn (Assert $page) =>
+            $page->has('hocVien', fn (Assert $assert) => $assert ->where('ten', 'XYZ') ->etc() )
+                ->has('listLopHoc', 3)
+                ->has('listLopHocVien', 1)
+                ->has('listLopHocVienIds', 1)
+                ->has('listLichThi', 3)
+                ->has('listLichThiHocVien', 3)
+                ->has('listLichThiHocVienIds', 3)
+        );
     }
 
-    public function test_hoc_vien_can_be_validated_on_updating(): void
+    /**
+     * @dataProvider invalidPostData
+     */
+    public function test_hoc_vien_can_be_validated_on_updating($data, $invalidFields, $validFields): void
     {
-        $user = User::factory()->create();
-        $item = HocVien::factory()->create();
+        $item = HocVien::first();
 
         $response = $this
-            ->actingAs($user)
+            ->actingAs($this->user)
             ->from( route('hoc-vien.edit', $item->id) )
-            ->patch( route('hoc-vien.update'), []);
+            ->patch( route('hoc-vien.update'), $data);
 
         $response
-            ->assertSessionHasErrors([
-                'ho',
-                'ten',
-                'email',
-                'dien_thoai',
-                'ngay_sinh',
-            ])
+            ->assertValid($validFields)
+            ->assertInvalid($invalidFields)
             ->assertRedirect( route('hoc-vien.edit', $item->id) );
     }
 
     public function test_hoc_vien_can_be_updated(): void
     {
-        $user = User::factory()->create();
-        $item = HocVien::factory()->create();
+        $item = HocVien::first();
         $postData = $this->postData($item->id);
 
         $response = $this
-            ->actingAs($user)
+            ->actingAs($this->user)
             ->from( route('hoc-vien.edit', $item->id) )
             ->patch( route('hoc-vien.update'), $postData);
 
@@ -128,22 +221,16 @@ class HocVienTest extends TestCase
         $this->assertSame($postData['email'], $item->email);
         $this->assertSame($postData['dien_thoai'], $item->dien_thoai);
         $this->assertSame($postData['gioi_tinh'], $item->gioi_tinh);
-        $this->assertSame($postData['ngay_sinh'], $item->ngay_sinh->format('Y/m/d'));
+        $this->assertSame($postData['ngay_sinh'], $item->ngay_sinh->format('Y-m-d'));
     }
 
     public function test_hoc_vien_has_hoc_phi_can_not_be_deleted():void
     {
-        $user = User::factory()->create();
-        $hocVien = HocVien::factory()->create();
-        $giaoVien = GiaoVien::factory()->create();
-        $chiNhanh = ChiNhanh::factory()->create();
-        $lopHoc = LopHoc::factory()->create();
-        $hocPhi = HocPhi::factory()->create([
-            'hoc_vien_id' => $hocVien->id
-        ]);
+        $hocVien = HocVien::first();
+        $this->createHocPhiForHocVien($hocVien);
 
         $response = $this
-            ->actingAs($user)
+            ->actingAs($this->user)
             ->from( route('hoc-vien.index') )
             ->post( route('hoc-vien.delete'), [
                 'id' => $hocVien->id,
@@ -158,11 +245,10 @@ class HocVienTest extends TestCase
 
     public function test_hoc_vien_can_be_deleted(): void
     {
-        $user = User::factory()->create();
-        $item = HocVien::factory()->create();
+        $item = HocVien::first();
 
         $response = $this
-            ->actingAs($user)
+            ->actingAs($this->user)
             ->from( route('hoc-vien.index') )
             ->post( route('hoc-vien.delete'), [
                 'id' => $item->id
@@ -177,11 +263,10 @@ class HocVienTest extends TestCase
 
     public function test_hoc_vien_can_be_validated_on_dang_ky_lop(): void
     {
-        $user = User::factory()->create();
-        $item = HocVien::factory()->create();
+        $item = HocVien::first();
 
         $response = $this
-            ->actingAs($user)
+            ->actingAs($this->user)
             ->from( route('hoc-vien.edit', $item->id) )
             ->post( route('hoc-vien.dang-ky-lop'), []);
 
@@ -195,11 +280,8 @@ class HocVienTest extends TestCase
 
     public function test_hoc_vien_can_dang_ky_lop(): void
     {
-        $user = User::factory()->create();
-        $giaoVien = GiaoVien::factory()->create();
-        $chiNhanh = ChiNhanh::factory()->create();
         $lopHoc = LopHoc::factory()->create();
-        $item = HocVien::factory()->create();
+        $item = HocVien::first();
 
         $postData = [
             'hoc_vien_id' => $item->id,
@@ -208,7 +290,7 @@ class HocVienTest extends TestCase
         ];
 
         $response = $this
-            ->actingAs($user)
+            ->actingAs($this->user)
             ->from( route('hoc-vien.edit', $item->id) )
             ->post( route('hoc-vien.dang-ky-lop'), $postData);
 
@@ -216,7 +298,7 @@ class HocVienTest extends TestCase
             ->assertSessionHasNoErrors()
             ->assertRedirect( route('hoc-vien.edit', $item->id) );
 
-        $lopHocVien = LopHocVien::latest()->first();
+        $lopHocVien = LopHocVien::latest('id')->first();
 
         $this->assertSame($postData['hoc_vien_id'], $lopHocVien->hoc_vien_id);
         $this->assertSame($postData['lop_hoc_id'], $lopHocVien->lop_hoc_id);
@@ -225,22 +307,19 @@ class HocVienTest extends TestCase
 
     public function test_hoc_vien_has_hoc_phi_can_not_xoa_lop(): void
     {
-        $user = User::factory()->create();
-        $hocVien = HocVien::factory()->create();
-        $giaoVien = GiaoVien::factory()->create();
-        $chiNhanh = ChiNhanh::factory()->create();
-        $lopHoc = LopHoc::factory()->create();
-        $lopHocVien = LopHocVien::factory()->create([
+        $hocVien = HocVien::first();
+        $lop_hoc = $hocVien->lop_hoc->first();
+        HocPhi::factory()->create([
             'hoc_vien_id' => $hocVien->id,
-            'lop_hoc_id' => $lopHoc->id,
-        ]);
-        $hocPhi = HocPhi::factory()->create([
-            'hoc_vien_id' => $hocVien->id,
-            'lop_hoc_id' => $lopHoc->id,
+            'lop_hoc_id' => $lop_hoc->id,
         ]);
 
+        $lopHocVien = LopHocVien::where('hoc_vien_id', $hocVien->id)
+                            ->where('lop_hoc_id', $lop_hoc->id)
+                            ->first();
+
         $response = $this
-            ->actingAs($user)
+            ->actingAs($this->user)
             ->from( route('hoc-vien.edit', $hocVien->id) )
             ->post( route('hoc-vien.xoa-lop'), [
                 'id' => $lopHocVien->id
@@ -255,18 +334,14 @@ class HocVienTest extends TestCase
 
     public function test_hoc_vien_can_xoa_lop(): void
     {
-        $user = User::factory()->create();
-        $hocVien = HocVien::factory()->create();
-        $giaoVien = GiaoVien::factory()->create();
-        $chiNhanh = ChiNhanh::factory()->create();
-        $lopHoc = LopHoc::factory()->create();
-        $lopHocVien = LopHocVien::factory()->create([
-            'hoc_vien_id' => $hocVien->id,
-            'lop_hoc_id' => $lopHoc->id,
-        ]);
+        $hocVien = HocVien::first();
+        $lop_hoc = $hocVien->lop_hoc->first();
+        $lopHocVien = LopHocVien::where('hoc_vien_id', $hocVien->id)
+                            ->where('lop_hoc_id', $lop_hoc->id)
+                            ->first();
 
         $response = $this
-            ->actingAs($user)
+            ->actingAs($this->user)
             ->from( route('hoc-vien.edit', $hocVien->id) )
             ->post( route('hoc-vien.xoa-lop'), [
                 'id' => $lopHocVien->id
@@ -282,15 +357,12 @@ class HocVienTest extends TestCase
 
     public function test_hoc_vien_can_dong_hoc_phi(): void
     {
-        $user = User::factory()->create();
-        $hocVien = HocVien::factory()->create();
-        $giaoVien = GiaoVien::factory()->create();
-        $chiNhanh = ChiNhanh::factory()->create();
-        $lopHoc = LopHoc::factory()->create();
+        $hocVien = HocVien::first();
+        $lopHoc = $hocVien->lop_hoc->first();
 
         /*----------  Test validation  ----------*/
         $response = $this
-            ->actingAs($user)
+            ->actingAs($this->user)
             ->from( route('hoc-vien.edit', $hocVien->id) )
             ->post( route('hoc-vien.dong-hoc-phi'), []);
 
@@ -315,11 +387,11 @@ class HocVienTest extends TestCase
         ];
 
         $response = $this
-            ->actingAs($user)
+            ->actingAs($this->user)
             ->from( route('hoc-vien.edit', $hocVien->id) )
             ->post( route('hoc-vien.dong-hoc-phi'), $postData);
 
-        $hocPhi = HocPhi::latest()->first();
+        $hocPhi = HocPhi::latest('id')->first();
 
         $this->assertSame($postData['hoc_vien_id'], $hocPhi->hoc_vien_id);
         $this->assertSame($postData['lop_hoc_id'], $hocPhi->lop_hoc_id);
@@ -330,7 +402,7 @@ class HocVienTest extends TestCase
 
         /*----------  Test dong hoc phi lop da dong hoc phi  ----------*/
         $response = $this
-            ->actingAs($user)
+            ->actingAs($this->user)
             ->from( route('hoc-vien.edit', $hocVien->id) )
             ->post( route('hoc-vien.dong-hoc-phi'), $postData);
 
@@ -348,14 +420,13 @@ class HocVienTest extends TestCase
 
     public function test_hoc_vien_can_dang_ky_thi(): void
     {
-        $user = User::factory()->create();
-        $hocVien = HocVien::factory()->create();
+        $hocVien = HocVien::first();
         $chungChi = ChungChi::factory()->create();
         $lichThi = LichThi::factory()->create();
 
         /*----------  Test validation  ----------*/
         $response = $this
-            ->actingAs($user)
+            ->actingAs($this->user)
             ->from( route('hoc-vien.edit', $hocVien->id) )
             ->post( route('hoc-vien.dang-ky-thi'), []);
 
@@ -373,7 +444,7 @@ class HocVienTest extends TestCase
         ];
 
         $response = $this
-            ->actingAs($user)
+            ->actingAs($this->user)
             ->from( route('hoc-vien.edit', $hocVien->id) )
             ->post( route('hoc-vien.dang-ky-thi'), $postData);
 
@@ -386,7 +457,7 @@ class HocVienTest extends TestCase
 
         /*----------  Test đăng ký thi ở lịch thi đã đăng ký  ----------*/
         $response = $this
-            ->actingAs($user)
+            ->actingAs($this->user)
             ->from( route('hoc-vien.edit', $hocVien->id) )
             ->post( route('hoc-vien.dang-ky-thi'), $postData);
 
@@ -397,8 +468,7 @@ class HocVienTest extends TestCase
 
     public function test_hoc_vien_can_update_lich_thi(): void
     {
-        $user = User::factory()->create();
-        $hocVien = HocVien::factory()->create();
+        $hocVien = HocVien::first();
         $chungChi = ChungChi::factory()->create();
         $lichThi = LichThi::factory()->create();
         $lichThiHocVien = LichThiHocVien::factory()->create([
@@ -410,7 +480,7 @@ class HocVienTest extends TestCase
 
         /*----------  Test validation  ----------*/
         $response = $this
-            ->actingAs($user)
+            ->actingAs($this->user)
             ->from( route('hoc-vien.edit', $hocVien->id) )
             ->post( route('hoc-vien.update-lich-thi'), []);
 
@@ -428,7 +498,7 @@ class HocVienTest extends TestCase
         ];
 
         $response = $this
-            ->actingAs($user)
+            ->actingAs($this->user)
             ->from( route('hoc-vien.edit', $hocVien->id) )
             ->post( route('hoc-vien.update-lich-thi'), $postData);
 
@@ -440,8 +510,7 @@ class HocVienTest extends TestCase
 
     public function test_hoc_vien_can_xoa_lich_thi(): void
     {
-        $user = User::factory()->create();
-        $hocVien = HocVien::factory()->create();
+        $hocVien = HocVien::first();
         $chungChi = ChungChi::factory()->create();
         $lichThi = LichThi::factory()->create();
         $lichThiHocVien = LichThiHocVien::factory()->create([
@@ -452,7 +521,7 @@ class HocVienTest extends TestCase
         ]);
 
         $response = $this
-            ->actingAs($user)
+            ->actingAs($this->user)
             ->from( route('hoc-vien.edit', $hocVien->id) )
             ->post( route('hoc-vien.xoa-lich-thi'), [
                 'id' => $lichThiHocVien->id
@@ -472,7 +541,7 @@ class HocVienTest extends TestCase
             'ten' => 'Tên',
             'email' => 'Email@email.dev',
             'dien_thoai' => '0909xxxxxx',
-            'ngay_sinh' => '2000/01/01',
+            'ngay_sinh' => '2000-01-01',
             'gioi_tinh' => 1,
         ];
 
@@ -481,5 +550,55 @@ class HocVienTest extends TestCase
         }
 
         return $data;
+    }
+
+    public static function searchData()
+    {
+        return [
+            'filter by lop' => [ 'lop', '1', 1, 'Nguyen XYZ' ],
+            'filter by ten' => [ 'ten', 'AB', 2, 'Le ABD' ],
+            'filter by ho' => [ 'ten', 'Nguyen', 1, 'Nguyen XYZ' ],
+            'filter by email' => [ 'email', 'hv3', 1, 'Le ABD' ],
+            'filter by dien_thoai' => [ 'dien_thoai', '123', 1, 'Nguyen XYZ' ],
+        ];
+    }
+
+    public static function sortData()
+    {
+        yield 'sort by ten asc' => [ 'ten', 'Tran ABC' ];
+        yield 'sort by ten desc' => [ '-ten', 'Nguyen XYZ' ];
+        yield 'sort by id asc' => [ 'id', 'Nguyen XYZ' ];
+        yield 'sort by id desc' => [ '-id', 'Le ABD' ];
+    }
+
+    public static function invalidPostData()
+    {
+        return [
+            [
+                ['ho' => 'Dinh', 'ten' => 'Ly'],
+                ['email', 'dien_thoai', 'ngay_sinh'],
+                ['ho', 'ten']
+            ],
+            [
+                ['ho' => 'Dinh', 'ten' => 'Ly', 'email' => 'email', 'dien_thoai' => '123', 'ngay_sinh' => '2000-01-03'],
+                ['email',],
+                ['ho', 'ten', 'dien_thoai', 'ngay_sinh']
+            ],
+        ];
+    }
+
+    protected function createHocPhiForHocVien($hocVien, $count = 1)
+    {
+        HocPhi::factory($count)->create([
+            'hoc_vien_id' => $hocVien->id,
+        ]);
+    }
+
+    protected function createLichThiForHocVien($hocVien, $count = 1)
+    {
+        ChungChi::factory($count)->create();
+        LichThi::factory($count)->create()->each(function ($lich) use ($hocVien) {
+            $lich->hoc_vien()->attach($hocVien->id);
+        });
     }
 }

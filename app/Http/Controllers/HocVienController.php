@@ -97,7 +97,7 @@ class HocVienController extends Controller
             'ten' => 'required',
             'email' => 'required|email',
             'dien_thoai' => 'required',
-            'ngay_sinh' => 'required',
+            'ngay_sinh' => 'required|date_format:Y-m-d',
         ]);
 
         $item = new HocVien();
@@ -173,7 +173,7 @@ class HocVienController extends Controller
             'ten' => 'required',
             'email' => 'required|email',
             'dien_thoai' => 'required',
-            'ngay_sinh' => 'required',
+            'ngay_sinh' => 'required|date_format:Y-m-d',
         ]);
 
         $item = HocVien::find($request->input('id'));

@@ -16,6 +16,20 @@ class HocPhiTest extends TestCase
 {
     use RefreshDatabase;
 
+    protected $user;
+
+    protected function setUp(): void
+    {
+        parent::setUp();
+        $this->user = User::factory()->create();
+
+        HocVien::factory()->create();
+        GiaoVien::factory()->create();
+        ChiNhanh::factory()->create();
+        LopHoc::factory()->create();
+        HocPhi::factory()->create();
+    }
+
     public function test_hoc_phi_index_is_displayed(): void
     {
         $response = $this->get( route('hoc-phi.index') );
@@ -25,11 +39,7 @@ class HocPhiTest extends TestCase
 
     public function test_hoc_phi_edit_is_displayed(): void
     {
-        $hocVien = HocVien::factory()->create();
-        $giaoVien = GiaoVien::factory()->create();
-        $chiNhanh = ChiNhanh::factory()->create();
-        $lopHoc = LopHoc::factory()->create();
-        $item = HocPhi::factory()->create();
+        $item = HocPhi::first();
 
         $response = $this->get( route('hoc-phi.edit', $item->id) ) ;
 
@@ -38,15 +48,10 @@ class HocPhiTest extends TestCase
 
     public function test_hoc_phi_can_be_validated_on_updating(): void
     {
-        $user = User::factory()->create();
-        $hocVien = HocVien::factory()->create();
-        $giaoVien = GiaoVien::factory()->create();
-        $chiNhanh = ChiNhanh::factory()->create();
-        $lopHoc = LopHoc::factory()->create();
-        $item = HocPhi::factory()->create();
+        $item = HocPhi::first();
 
         $response = $this
-            ->actingAs($user)
+            ->actingAs($this->user)
             ->from( route('hoc-phi.edit', $item->id) )
             ->patch( route('hoc-phi.update'), []);
 
@@ -61,16 +66,13 @@ class HocPhiTest extends TestCase
 
     public function test_hoc_phi_can_be_updated(): void
     {
-        $user = User::factory()->create();
-        $hocVien = HocVien::factory()->create();
-        $giaoVien = GiaoVien::factory()->create();
-        $chiNhanh = ChiNhanh::factory()->create();
-        $lopHoc = LopHoc::factory()->create();
-        $hocPhi = HocPhi::factory()->create();
+        $hocVien = HocVien::first();
+        $lopHoc = LopHoc::first();
+        $hocPhi = HocPhi::first();
         $postData = $this->postData($hocVien->id, $lopHoc->id, $hocPhi->id);
 
         $response = $this
-            ->actingAs($user)
+            ->actingAs($this->user)
             ->from( route('hoc-phi.edit', $hocPhi->id) )
             ->patch( route('hoc-phi.update'), $postData);
 
@@ -88,15 +90,10 @@ class HocPhiTest extends TestCase
 
     public function test_hoc_phi_can_be_deleted(): void
     {
-        $user = User::factory()->create();
-        $hocVien = HocVien::factory()->create();
-        $giaoVien = GiaoVien::factory()->create();
-        $chiNhanh = ChiNhanh::factory()->create();
-        $lopHoc = LopHoc::factory()->create();
-        $hocPhi = HocPhi::factory()->create();
+        $hocPhi = HocPhi::first();
 
         $response = $this
-            ->actingAs($user)
+            ->actingAs($this->user)
             ->from( route('hoc-phi.index') )
             ->post( route('hoc-phi.delete'), [
                 'id' => $hocPhi->id

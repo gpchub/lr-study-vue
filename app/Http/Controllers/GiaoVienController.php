@@ -79,7 +79,7 @@ class GiaoVienController extends Controller
             'ten' => 'required',
             'email' => 'required|email',
             'dien_thoai' => 'required',
-            'ngay_sinh' => 'required',
+            'ngay_sinh' => 'required|date_format:Y-m-d',
         ]);
 
         $item = new GiaoVien();
@@ -113,7 +113,7 @@ class GiaoVienController extends Controller
             'ten' => 'required',
             'email' => 'required|email',
             'dien_thoai' => 'required',
-            'ngay_sinh' => 'required',
+            'ngay_sinh' => 'required|date_format:Y-m-d',
         ]);
 
         $item = GiaoVien::find($request->input('id'));
